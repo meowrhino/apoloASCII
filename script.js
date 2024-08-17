@@ -13,7 +13,12 @@ function startAudio() {
     trackSource.connect(panner).connect(audioContext.destination);
 
     // Iniciar la reproducción del audio
-    audioElement.play();
+    audioElement.play().then(() => {
+        console.log("Reproducción de audio iniciada");
+    }).catch(error => {
+        console.error("Error al reproducir el audio: ", error);
+    });
+
     document.getElementById('startButton').style.display = 'none';  // Ocultar el botón de inicio
 }
 
@@ -45,7 +50,9 @@ function updatePanning() {
     }
 
     // Aplicar el valor de panning al nodo de panner
-    panner.pan.value = panValue;
+    if (panner) {
+        panner.pan.value = panValue;
+    }
 }
 
 document.addEventListener('keydown', (event) => {
