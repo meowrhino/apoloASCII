@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego ASCII con Personas</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            font-family: monospace;
+        }
+        #game {
+            font-size: 16px;
+            line-height: 16px;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div id="game"></div>
+
+    <script>
+        const gameWidth = 60;
+        const gameHeight = 20;
+        let player = { x: gameWidth / 2, y: gameHeight - 2 };
+        let escenario = { x: gameWidth / 2 - 8, y: 2, width: 16, height: 3 };
+        let altavozIzq = { x: escenario.x - 6, y: escenario.y + escenario.height, width: 3, height: 4 };
+        let altavozDer = { x: escenario.x + escenario.width + 3, y: escenario.y + escenario.height, width: 3, height: 4 };
+        let personas = [];
+        const numPersonas = 30;
+
+        // Crear personas aleatorias cerca del escenario
+        for (let i = 0; i < numPersonas; i++) {
+            let personaX, personaY;
+            do {
+                personaX = Math.floor(Math.random() * (escenario.width + 10)) + escenario.x - 5;
+                personaY = Math.floor(Math.random() * 5) + escenario.y + escenario.height + 1;
+            } while (personaX < 0 || personaX >= gameWidth || personaY < 0 || personaY >= gameHeight);
+            
+            personas.push({
+                x: personaX,
+                y: personaY,
+                pushCount: 0
+            });
+        }
+
+        function renderGame() {
+            let screen = Array(gameHeight).fill().map(() => Array(gameWidth).fill(' '));
+
+            // Dibujar el escenario
+            for (let i = 0; i < escenario.height; i++) {
+                for (let j = 0; j < escenario.width; j++) {
+                    screen[escenario.y + i][escenario.x + j] = '█';
+                }
+            }
+
+            // Dibujar los altavoces
+            for (let i = 0; i < altavozIzq.height; i++) {
+                for (let j = 0; j < altavozIzq.width; j++) {
+                    screen[altavozIzq.y + i][altavozIzq.x + j] = '▒';
+                    screen[altavozDer.y + i][altavozDer.x + j] = '▒';
+                }
+            }
+
+            // Dibujar las personas
+            personas.forEach(persona => {
+                screen[persona.y][persona.x] = 'O';
+            });
+
+            // Dibujar el jugador
+            screen[Math.floor(player.y)][Math.floor(player.x)] = '@';
+
+            // Renderizar la pantalla
+            document.getElementById('game').textContent = screen.map(row => row.join('')).join('\n');
+        }
+
+        // Comprobar colisiones entre dos objetos
+        function detectCollision(obj1, obj2) {
+            return obj1.x === obj2.x && obj1.y === obj2.y;
+        }
+
+        // Empujar una persona
+        function pushPersona(persona, dx, dy) {
+            let newX = persona.x + dx;
+            let newY = persona.y + dy;
+
+            // Verificar límites del escenario y bordes del juego
+            if (newX < 0 || newX >= gameWidth || newY < 0 || newY >= gameHeight) return;
+            if (newX >= escenario.x && newX < escenario.x + escenario.width && newY >= escenario.y && newY < escenario.y + escenario.height) return;
+
+            // Verificar colisiones con otras personas
+            let collision = personas.some(p => detectCollision(p, { x: newX, y: newY }));
+            if (!collision) {
+                persona.x = newX;
+                persona.y = newY;
+            } else {
+                // Si hay colisión con otra persona, empujarla también
+                let otherPersona = personas.find(p => detectCollision(p, { x: newX, y: newY }));
+                if (otherPersona) {
+                    pushPersona(otherPersona, dx, dy); // Empujar a la otra persona
+                    persona.x = newX;
+                    persona.y = newY;
+                }
+            }
+        }
+
+        // Mover el jugador
+        document.addEventListener('keydown', (event) => {
+            let prevX = player.x;
+            let prevY = player.y;
+
+            switch(event.key) {
+                case 'w':
+                    player.y = Math.max(0, player.y - 1);
+                    break;
+                case 'a':
+                    player.x = Math.max(0, player.x - 1);
+                    break;
+                case 's':
+                    player.y = Math.min(gameHeight - 1, player.y + 1);
+                    break;
+                case 'd':
+                    player.x = Math.min(gameWidth - 1, player.x + 1);
+                    break;
+            }
+
+            // Evitar colisiones con el escenario
+            if (player.x >= escenario.x && player.x < escenario.x + escenario.width && player.y >= escenario.y && player.y < escenario.y + escenario.height) {
+                player.x = prevX;
+                player.y = prevY;
+            }
+
+            // Detectar colisiones con las personas y empujarlas
+            personas.forEach(persona => {
+                if (detectCollision(player, persona)) {
+                    let dx = persona.x - prevX;
+                    let dy = persona.y - prevY;
+                    pushPersona(persona, dx, dy); // Empujar persona
+                }
+            });
+
+            renderGame();
+        });
+
+        renderGame();  // Iniciar la pantalla
+    </script>
+</body>
+</html>

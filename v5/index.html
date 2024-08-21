@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego ASCII con Música Techno</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            font-family: monospace;
+        }
+        #game {
+            font-size: 16px;
+            line-height: 16px;
+            white-space: pre;
+        }
+    </style>
+</head>
+<body>
+    <div id="game"></div>
+
+    <!-- Cargar Scripts -->
+    <script src="gameEntities.js"></script>
+    <script src="gameLogic.js"></script>
+    <script>
+        // Iniciar la música solo cuando el usuario hace clic
+        document.body.addEventListener('click', () => {
+            createTechnoMusic();
+        });
+
+        function createTechnoMusic() {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(130, audioCtx.currentTime); // Nota base
+            gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+
+            // Cambiar la frecuencia periódicamente para simular un ritmo techno
+            setInterval(() => {
+                oscillator.frequency.setValueAtTime(130 + Math.random() * 50, audioCtx.currentTime);
+            }, 200);
+        }
+    </script>
+    <script src="technoMusic.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
